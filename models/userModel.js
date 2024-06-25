@@ -23,7 +23,7 @@ const userSchema = new Schema({
   },
   role: {
     type: String, 
-    required: [true, "Please provide your role"],
+    required: true,
     enum: ['Beautician', 'Customer']
   },
   createdAt: {
