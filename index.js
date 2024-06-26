@@ -3,7 +3,7 @@ dotenv.config()
 import express from 'express'
 import { connectToDB } from './database/db.js'
 import { handleErrors } from './middlewares/errorHandler.js'
-import { authRoutes } from './routes/auth-routes.js'
+import { userRoutes } from './routes/user-routes.js'
 import helmet from 'helmet'
 import cors from 'cors'
 import morgan from 'morgan'
@@ -30,7 +30,7 @@ app.use(express.urlencoded({extended: true}))
 
 // cors config
 const corsOptions = {
-  origin: ['http://localhost:5000'],
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://flaury-delv.vercel.app'],
   optionsSuccessStatus: 200,
   credentiasl: true,  
 }
@@ -38,7 +38,7 @@ const corsOptions = {
 app.use(cors(corsOptions))
 
 // routes
-app.use('/api/v1/auth', authRoutes)
+app.use('/api/v1/users', userRoutes)
 
 // home
 app.get('/', (req, res) => {

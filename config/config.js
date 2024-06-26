@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 // MongoDB URL
-const db_path = 'Express-MVC-Starter'
+const db_path = 'Flaury-backend'
 
 const MONGODB_USERNAME = process.env.MONGODB_USERNAME || ''
 const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD || ''

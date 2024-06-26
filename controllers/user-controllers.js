@@ -1,18 +1,18 @@
 import bcrypt from 'bcryptjs'
 import { passwordValidator, sanitizePhoneNumber, cloudinary, sendEmail } from '../utils/index.js'
 import { handleErrors } from '../middlewares/errorHandler.js'
-import { authModel } from '../models/auth-model.js'
+import { User } from '../models/userModel.js'
 import jwt from 'jsonwebtoken'
 
 const period = 60 * 60 * 24 * 3
-const baseUrl = 'http://localhost:5000/api/v1/auth'
+const baseUrl = 'https://flaury-delv.vercel.app/api/v1/users'
 
 
 export const registerUser = async (req, res) => {
   try {
-    const { email, password, phoneNumber } = req.body    
+    const { email, name, phoneNumber, password, role="Customer"  } = req.body    
 
-    const existingUser = await authModel.findOne({ email })
+    const existingUser = await User.findOne({ email })
     if (existingUser) {
       return res
         .status(400)
@@ -35,24 +35,26 @@ export const registerUser = async (req, res) => {
 
     const hashPassword = await bcrypt.hash(password, 10)  
 
-    let imageUrl = authModel.schema.path('profilePics').defaultValue
+    let imageUrl = User.schema.path('profilePics').defaultValue
     if (req.file && req.file.path){
       const uploadRes = await cloudinary.uploader.upload(req.file.path, {
-        upload_preset: 'express-mvc-starter'
+        upload_preset: 'Flaury-backend'
       })
   
        imageUrl = uploadRes.secure_url
     }
     
 
-    const newUser = authModel({
+    const newUser = User({
       email,
+      name,
       password: hashPassword,
       phoneNumber: sanitizedPhone.phone,
-      profilePics: imageUrl
+      profilePics: imageUrl,
+      role
     }) 
 
-    const subject = 'Welcome to New Comapany'
+    const subject = 'Welcome to Flaury'
     const text = 'Thank you for registering with us!'
     const template = 'welcomeMessage'    
 
@@ -69,7 +71,7 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body
-    const user = await authModel.findOne({ email })
+    const user = await User.findOne({ email })
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'user with the email or password not found' })
@@ -107,7 +109,7 @@ export const forgetPassword = async (req, res) => {
   try {
     const { email } = req.body
     // check if email exists
-    const existingEmail = await authModel.findOne({email})
+    const existingEmail = await User.findOne({email})
     if(!existingEmail){
       return res.status(404).json({success: false, message: "User with this email does not exist."})
     }
@@ -133,7 +135,7 @@ export const forgetPassword = async (req, res) => {
 export const getResetPassword = async (req, res) => {
 try {
   const {id, token} = req.params
-  const exisintigUser = await authModel.findOne({_id: id})
+  const exisintigUser = await User.findOne({_id: id})
   if(!exisintigUser){
     return res.status(404).json({success: false, message: "User does not exists."})
   }
@@ -149,13 +151,13 @@ export const postResetPassword = async (req, res) => {
   try {
   const {id, token} = req.params
   const { password } = req.body
-  const exisintigUser = await authModel.findOne({_id: id})
+  const exisintigUser = await User.findOne({_id: id})
   if(!exisintigUser){
     return res.status(404).json({success: false, message: "User does not exists."})
   }
   jwt.verify(token, process.env.SECRET) 
   const hashPassword = await bcrypt.hash(password, 10)  
-  await authModel.updateOne({_id: id}, {
+  await User.updateOne({_id: id}, {
     $set : {
       password: hashPassword
     }
