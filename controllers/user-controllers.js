@@ -5,7 +5,7 @@ import { User } from '../models/userModel.js'
 import jwt from 'jsonwebtoken'
 
 const period = 60 * 60 * 24 * 3
-const baseUrl = 'https://flaury-delv.vercel.app/api/v1/users'
+const baseUrl = 'https://flaury-backend.onrender.com/api/v1/users'
 
 
 export const registerUser = async (req, res) => {
@@ -70,7 +70,7 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body
+    const { email, password, role } = req.body
     const user = await User.findOne({ email })
 
     if (!user) {

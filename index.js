@@ -22,6 +22,8 @@ let limiter = rateLimit({
   message: "We have received too many requests from this IP. Please try again after one hour."
 })
 
+// static file
+app.use(express.static('public'))
 
 // middlewares
 app.use('/api', limiter)
