@@ -40,7 +40,7 @@ const corsOptions = {
 app.use(cors(corsOptions))
 
 // routes
-app.use('/api/v1/users', userRoutes)
+app.use('/api/v1/user', userRoutes)
 
 // home
 app.get('/', (req, res) => {

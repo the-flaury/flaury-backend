@@ -74,8 +74,13 @@ export const loginUser = async (req, res) => {
     const user = await User.findOne({ email })
 
     if (!user) {
-      return res.status(404).json({ success: false, message: 'user with the email or password not found' })
+      return res.status(404).json({ success: false, message: 'User with the email or password not found' })
     }
+
+    if(user.role !== role){
+      return res.status(401).json({success: false, message: `Role mismatch. Please select the correct role. Your registered role is: ${user.role}.`})
+    }
+
     const checkPassword = await bcrypt.compare(password, user.password)
     if (!checkPassword) {
       return res
