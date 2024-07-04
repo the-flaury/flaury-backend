@@ -30,7 +30,7 @@ const userSchema = new Schema({
   },
   role: {
     type: String, 
-    required: true,
+    required: [true, "Please provide your role"],
   },
   createdAt: {
     type: Date,

@@ -10,7 +10,7 @@ const baseUrl = 'https://flaury-backend.onrender.com/api/v1/users'
 
 export const registerUser = async (req, res) => {
   try {
-    const { email, name, phoneNumber, password, role="Customer"  } = req.body    
+    const { email, name, phoneNumber, password, role } = req.body    
 
     const existingUser = await User.findOne({ email })
     if (existingUser) {
