@@ -4,10 +4,12 @@ import express from 'express'
 import { connectToDB } from './database/db.js'
 import { handleErrors } from './middlewares/errorHandler.js'
 import { userRoutes } from './routes/user-routes.js'
+import { beauticianRoutes } from './routes/beautician-routes.js'
 import helmet from 'helmet'
 import cors from 'cors'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
+
 
 const app = express()
 const port = process.env.PORT
@@ -41,6 +43,7 @@ app.use(cors(corsOptions))
 
 // routes
 app.use('/api/v1/user', userRoutes)
+app.use('/api/v1/beautician', beauticianRoutes)
 
 // home
 app.get('/', (req, res) => {

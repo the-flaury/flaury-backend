@@ -2,24 +2,45 @@ import mongoose from "mongoose";
 import { Schema } from 'mongoose'
 
 const beauticianSchema = new Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+  email : {
+    type: String,
+    required: [true, "Please provide your email"],
+    lowercase: true,
+    unique: true
+  },
+  name: {
+    type: String,
+    required: [true, "Please provide your name"]
+  },
+  phoneNumber: {
+    type: String,
+    required: [true, "Please provide your phone number"]
+  },
+  password: {
+    type: String,
+    required: [true, "Please provide your password"],
+    minLength: [6, "Please your password must not be less than 6 chracters."],
   },
   specialty: {
-    type: true,
+    type: String,
     required: [true, "Please enter your specialty"]
   },
+  NIN: {
+    type: String,
+    required: [true, "Please provide your National Identification Number"]
+  },
   experience: {
-    type: Number, 
-    required: [true, "Please enter your years of experience"]
+    type: Number,     
   },
   salonName: {
     type: String
    },
    salonAddress: {
     type: String
+  },
+  isApproved: {
+    type: Boolean,
+    deafault: false 
   }
 })
 
