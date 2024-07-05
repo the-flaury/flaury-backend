@@ -25,6 +25,10 @@ const beauticianSchema = new Schema({
     type: String,
     required: [true, "Please enter your specialty"]
   },
+  role: {
+    type: String,
+    required: [true, "Please provide your role"]
+  },
   NIN: {
     type: String,
     required: [true, "Please provide your National Identification Number"]
