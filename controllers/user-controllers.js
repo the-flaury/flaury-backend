@@ -72,7 +72,7 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    const { email, password, role } = req.body
+    const { email, password } = req.body;
 
     const signAndRespond = (user, role) => {
       jwt.sign(
@@ -81,45 +81,46 @@ export const loginUser = async (req, res) => {
         { expiresIn: '1hr' },
         (err, token) => {
           if (err) throw err;
-          res.cookie(`${role.toLowerCase()}Id`, user._id, { maxAge: period, httpOnly: true })
+          res.cookie(`${role.toLowerCase()}Id`, user._id, { maxAge: period, httpOnly: true });
           res.status(200).json({
             success: true,
             message: `${role} Login Successfully`,
             user,
             token
-          })
+          });
         }
-      )
-    }    
+      );
+    };
+
     const validateUser = async (user, password) => {
       if (!user) {
-        return res.status(404).json({ success: false, message: `${role} with the email or password not found` })
+        return res.status(404).json({ success: false, message: 'User with the email or password not found' });
       }
-      if (user.role !== role) {
-        return res.status(401).json({ success: false, message: `Role mismatch. Please select the correct role. Your registered role is: ${user.role}`})
-      }
-      const checkPassword = await bcrypt.compare(password, user.password)
-      if (!checkPassword) {
-        return res.status(401).json({ success: false, message: 'Invalid Password'})
-      }
-      return user
-    }
 
-    if (role === "Customer") {
-      const user = await User.findOne({ email })
-      const validatedUser = await validateUser(user, password)
-      if (validatedUser) signAndRespond(validatedUser, role)
-    } else if (role === "Beautician") {
-      const beautician = await Beautician.findOne({ email })
-      const validatedBeautician = await validateUser(beautician, password)
-      if (validatedBeautician) signAndRespond(validatedBeautician, role)
+      const checkPassword = await bcrypt.compare(password, user.password);
+      if (!checkPassword) {
+        return res.status(401).json({ success: false, message: 'Invalid Password' });
+      }
+
+      return user;
+    };
+
+    const user = await User.findOne({ email });
+    const beautician = await Beautician.findOne({ email });
+
+    if (user) {
+      const validatedUser = await validateUser(user, password);
+      if (validatedUser) signAndRespond(validatedUser, 'Customer');
+    } else if (beautician) {
+      const validatedBeautician = await validateUser(beautician, password);
+      if (validatedBeautician) signAndRespond(validatedBeautician, 'Beautician');
     } else {
-      return res.status(400).json({ success: false, message: 'Invalid role provided'})
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
   } catch (error) {
-    handleErrors(error, res)
+    handleErrors(error, res);
   }
-}
+};
 
 
 export const forgetPassword = async (req, res) => {
