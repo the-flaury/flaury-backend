@@ -60,7 +60,7 @@ export const registerBeautician = async (req, res) => {
     const text = 'Thank you for registering with us!'
     const template = 'welcomeBeautician'    
     const context = {
-        fisrtname: firstName
+        firstname: firstName
     }
 
     const savedBeautician = await newBeautician.save()
