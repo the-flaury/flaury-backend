@@ -45,6 +45,7 @@ export const registerUser = async (req, res) => {
        imageUrl = uploadRes.secure_url
     }
     
+    const firstName = name.split(' ')[0]
 
     const newUser = User({
       email,
@@ -55,12 +56,15 @@ export const registerUser = async (req, res) => {
       role
     }) 
 
-    const subject = 'Welcome to Flaury'
+    const subject = 'Welcome to Flaury!'
     const text = 'Thank you for registering with us!'
-    const template = 'welcomeMessage'    
+    const template = 'welcomeMessage'
+    const context = {
+      firstname: firstName
+    }    
 
     const savedUser = await newUser.save()
-    await sendEmail(email, subject, text, template)
+    await sendEmail(email, subject, text, template, context)
     res
       .status(201)
       .json({ success: true, message: 'Account Created Successfully', savedUser })

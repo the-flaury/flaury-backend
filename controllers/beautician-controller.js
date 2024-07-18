@@ -43,6 +43,7 @@ export const registerBeautician = async (req, res) => {
     })
     const ninUrl = uploadRes.secure_url
     
+    const firstName = name.split(' ')[0]
 
     const newBeautician = Beautician({
       email,
@@ -55,12 +56,15 @@ export const registerBeautician = async (req, res) => {
       isApproved: false
     }) 
 
-    const subject = 'Welcome to Flaury'
+    const subject = 'Your Hustle Has Met With Success!'
     const text = 'Thank you for registering with us!'
     const template = 'welcomeBeautician'    
+    const context = {
+        fisrtname: firstName
+    }
 
     const savedBeautician = await newBeautician.save()
-    await sendEmail(email, subject, text, template)
+    await sendEmail(email, subject, text, template, context)
     res
       .status(201)
       .json({ success: true, message: 'Account Created Successfully', savedBeautician })
