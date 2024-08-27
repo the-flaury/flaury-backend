@@ -76,55 +76,52 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body
+    console.log(req.body)
 
-    const signAndRespond = (user, role) => {
-      jwt.sign(
-        { id: user._id },
-        process.env.SECRET,
-        { expiresIn: '1hr' },
-        (err, token) => {
-          if (err) throw err;
-          res.cookie(`${role.toLowerCase()}Id`, user._id, { maxAge: period, httpOnly: true });
-          res.status(200).json({
-            success: true,
-            message: `${role} Login Successfully`,
-            user,
-            token
-          });
-        }
-      );
-    };
-
-    const validateUser = async (user, password) => {
-      if (!user) {
-        return res.status(404).json({ success: false, message: 'User with the email or password not found' });
-      }
-
-      const checkPassword = await bcrypt.compare(password, user.password);
-      if (!checkPassword) {
-        return res.status(401).json({ success: false, message: 'Invalid Password' });
-      }
-
-      return user;
-    };
-
-    const user = await User.findOne({ email });
-    const beautician = await Beautician.findOne({ email });
-
-    if (user) {
-      const validatedUser = await validateUser(user, password);
-      if (validatedUser) signAndRespond(validatedUser, 'Customer');
-    } else if (beautician) {
-      const validatedBeautician = await validateUser(beautician, password);
-      if (validatedBeautician) signAndRespond(validatedBeautician, 'Beautician');
-    } else {
-      return res.status(404).json({ success: false, message: 'User not found' });
+    if(!email || !password || !role ){
+      return res.status(401).json({success: false, message:"All fields are required"})
     }
-  } catch (error) {
-    handleErrors(error, res);
+
+    let user;
+    if (role === "Customer"){
+      user = await User.findOne({email})
+    }
+    
+    else if(role === "Beautician"){
+      user = await Beautician.findOne({email})
+    }
+    
+    console.log(user)
+    if(!user){
+      return res.status(404).json({ success: false, message: 'User with the email or password not found' });
+    }
+
+    const checkPassword = await bcrypt.compare(password, user.password)
+    if (!checkPassword) {
+      return res.status(401).json({ success: false, message: 'Invalid Password' })
+    }
+
+    jwt.sign(
+      { id: user._id },
+      process.env.SECRET,
+      { expiresIn: '1hr' },
+      (err, token) => {
+        if (err) throw err;
+        res.cookie(`${role.toLowerCase()}Id`, user._id, { maxAge: period, httpOnly: true })
+        res.status(200).json({
+          success: true,
+          message: `${user.role} Login Successfully`,
+          user,
+          token
+        })
+      }
+    )
+}
+  catch(error){
+    handleErrors(error, res)
   }
-};
+}
 
 
 export const forgetPassword = async (req, res) => {
@@ -190,3 +187,55 @@ catch(error){
   handleErrors(error, res)
 }
 }
+
+
+
+
+// const signAndRespond = (user, role) => {
+//   jwt.sign(
+//     { id: user._id },
+//     process.env.SECRET,
+//     { expiresIn: '1hr' },
+//     (err, token) => {
+//       if (err) throw err;
+//       res.cookie(`${role.toLowerCase()}Id`, user._id, { maxAge: period, httpOnly: true })
+//       res.status(200).json({
+//         success: true,
+//         message: `${role} Login Successfully`,
+//         user,
+//         token
+//       })
+//     }
+//   )
+// }
+
+// const validateUser = async (user, password) => {
+//   if (!user) {
+//     return res.status(404).json({ success: false, message: 'User with the email or password not found' });
+//   }
+
+//   const checkPassword = await bcrypt.compare(password, user.password);
+//   if (!checkPassword) {
+//     return res.status(401).json({ success: false, message: 'Invalid Password' });
+//   }
+
+//   return user;
+// };
+// let user;
+// user = await User.findOne({ role });
+// user = await Beautician.findOne({ role });
+
+// console.log(user)
+
+// if (user) {
+//   const validatedUser = await validateUser(user, password);
+//   if (validatedUser) signAndRespond(validatedUser, role);
+// } else if (user.role === 'Beautician') {
+//   const validatedBeautician = await validateUser(beautician, password);
+//   if (validatedBeautician) signAndRespond(validatedBeautician, role);
+// } else {
+//   return res.status(404).json({ success: false, message: 'User not found' });
+// }
+// } catch (error) {
+// handleErrors(error, res);
+// }
