@@ -1,9 +1,9 @@
 import bcrypt from 'bcryptjs'
-import { passwordValidator, sanitizePhoneNumber, cloudinary, sendEmail } from '../utils/index.js'
-import { handleErrors } from '../middlewares/errorHandler.js'
-import { User } from '../models/userModel.js'
-import { Beautician } from '../models/beauticianModel.js'
 import jwt from 'jsonwebtoken'
+import { passwordValidator, sanitizePhoneNumber, cloudinary, sendEmail } from '../../../utils/index.js'
+import { handleErrors } from '../../../middlewares/errorHandler.js'
+import { User } from '../../../models/User/user-model.js'
+import { Beautician } from '../../../models/Beautician/beautician-model.js'
 
 const period = 60 * 60 * 24 * 3
 const baseUrl = 'https://flaury-backend.onrender.com/api/v1/user'
@@ -19,7 +19,11 @@ export const registerUser = async (req, res) => {
         .status(400)
         .json({ success: false, message: 'Email already exists.' })
     }
-    
+
+    const existingBusinessAccount = await Beautician.findOne({email})
+    if (existingBusinessAccount) {
+      return res.status(400).json({success: false, messsage: "This email is already associated with a business account. Please use a different email to register."})
+    }
    // Validate phone number
     const sanitizedPhone = sanitizePhoneNumber(phoneNumber)
     if (!sanitizedPhone.status) {
@@ -63,11 +67,11 @@ export const registerUser = async (req, res) => {
       firstname: firstName
     }    
 
-    const savedUser = await newUser.save()
+    const user = await newUser.save()
     await sendEmail(email, subject, text, template, context)
     res
       .status(201)
-      .json({ success: true, message: 'Account Created Successfully', savedUser })
+      .json({data :{ success: true, message: 'Account Created Successfully', user }})
   } catch (error) {
     handleErrors(error, res)
   }
@@ -76,23 +80,22 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    const { email, password, role } = req.body
-    console.log(req.body)
+    const { email, password } = req.body
+    // console.log(req.body)
 
-    if(!email || !password || !role ){
+    if(!email || !password){
       return res.status(401).json({success: false, message:"All fields are required"})
     }
 
-    let user;
-    if (role === "Customer"){
-      user = await User.findOne({email})
-    }
+    let user = await User.findOne({email})
+    let role = "Customer"
     
-    else if(role === "Beautician"){
+   if(!user){
       user = await Beautician.findOne({email})
+      role = "Beautician"
     }
     
-    console.log(user)
+    // console.log(user)
     if(!user){
       return res.status(404).json({ success: false, message: 'User with the email or password not found' });
     }
@@ -109,11 +112,12 @@ export const loginUser = async (req, res) => {
       (err, token) => {
         if (err) throw err;
         res.cookie(`${role.toLowerCase()}Id`, user._id, { maxAge: period, httpOnly: true })
-        res.status(200).json({
+        res.status(200).json({ data : {
           success: true,
-          message: `${user.role} Login Successfully`,
+          message: `${role} Login Successfully`,
           user,
           token
+        }
         })
       }
     )

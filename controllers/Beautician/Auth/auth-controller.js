@@ -1,7 +1,8 @@
 import bcrypt from 'bcryptjs'
-import { passwordValidator, sanitizePhoneNumber, cloudinary, sendEmail } from '../utils/index.js'
-import { handleErrors } from '../middlewares/errorHandler.js'
-import { Beautician } from '../models/beauticianModel.js'
+import { passwordValidator, sanitizePhoneNumber, cloudinary, sendEmail } from '../../../utils/index.js'
+import { handleErrors } from '../../../middlewares/errorHandler.js'
+import { Beautician } from '../../../models/Beautician/beautician-model.js'
+import { User } from '../../../models/User/user-model.js'
 
 
 export const registerBeautician = async (req, res) => {
@@ -15,6 +16,12 @@ export const registerBeautician = async (req, res) => {
         .json({ success: false, message: 'Email already exists.' })
     }
     
+    // existing account with user model
+    const existingBusinessAccount = await User.findOne({email})
+    if (existingBusinessAccount) {
+      return res.status(400).json({success: false, messsage: "This email is already associated with a user account. Please use a different email to register."})
+    }
+
    // Validate phone number
     const sanitizedPhone = sanitizePhoneNumber(phoneNumber)
     if (!sanitizedPhone.status) {
@@ -31,16 +38,29 @@ export const registerBeautician = async (req, res) => {
 
     const hashPassword = await bcrypt.hash(password, 10)  
 
-    if (!req.file || !req.file.path) {
+    if (!req.file) {
       return res.status(400).json({
         success: false,
         message: 'Please upload your NIN'
       })
     }
 
-    const uploadRes = await cloudinary.uploader.upload(req.file.path, {
-      upload_preset: 'Flaury-backend'
-    })
+    // Upload file to Cloudinary using a stream
+    const streamUpload = (file) => {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream((err, result) => {
+          if (result) {
+            resolve(result)
+          } else {
+            reject(err)
+          }
+        })
+        stream.end(file.buffer)
+      })
+    }
+
+    const uploadRes = await streamUpload(req.file)
+
     const ninUrl = uploadRes.secure_url
     
     const firstName = name.split(' ')[0]
@@ -63,11 +83,11 @@ export const registerBeautician = async (req, res) => {
         firstname: firstName
     }
 
-    const savedBeautician = await newBeautician.save()
+    const beautician = await newBeautician.save()
     await sendEmail(email, subject, text, template, context)
     res
       .status(201)
-      .json({ success: true, message: 'Account Created Successfully', savedBeautician })
+      .json({data : { success: true, message: 'Account Created Successfully', beautician }})
   } catch (error) {
     handleErrors(error, res)
   }

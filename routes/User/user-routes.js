@@ -1,6 +1,6 @@
 import express from 'express'
-import { registerUser, loginUser, forgetPassword, getResetPassword , postResetPassword} from "../controllers/user-controllers.js"
-import { upload } from "../utils/index.js"
+import { registerUser, loginUser, forgetPassword, getResetPassword , postResetPassword} from "../../controllers/User/Auth/auth-controllers.js"
+import { upload } from "../../utils/index.js"
 
 
 export const userRoutes = express.Router()
