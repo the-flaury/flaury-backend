@@ -40,14 +40,14 @@ export const register = async (req: Request, res: Response) => {
     generateAuthTokenAndCookie(user._id, res);
     await sendVerificationEmail(email, verificationToken);
 
-    return res.json({
+    res.json({
       success: true,
       message: "Account created successfully!",
       user: { ...user._doc, password: undefined },
     });
   } catch (error: any) {
     console.log({ error });
-    return res.status(400).json({ success: false, message: error?.message });
+    res.status(400).json({ success: false, message: error?.message });
   }
 };
 
@@ -97,4 +97,13 @@ export const signin = async (req: Request, res: Response) => {
   }
 };
 
-export const logout = async (req: Request, res: Response) => {};
+export const logout = async (req: Request, res: Response) => {
+  try {
+    res.clearCookie("auth-token");
+    res
+      .status(200)
+      .json({ success: true, message: "Account has been logged out!" });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
