@@ -23,7 +23,7 @@ export const register = async (req: Request, res: Response) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const verificationToken = generateVerificationToken();
+    const verificationToken = generateVerificationToken() as number;
     const verificationTokenExpiresAt = daysFromNow(1);
     console.log({ verificationTokenExpiresAt });
 
@@ -105,5 +105,47 @@ export const logout = async (req: Request, res: Response) => {
       .json({ success: true, message: "Account has been logged out!" });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) throw new Error("Account does not exist");
+
+    user.resetPasswordToken = generateVerificationToken("mix");
+    user.resetPasswordExpiresAt = daysFromNow(1);
+
+    user.save();
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  try {
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpiresAt: { $gt: new Date() },
+    });
+    if (!user) throw new Error("Invalid password reset token");
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    user.password = hashedPassword;
+
+    user.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "Password reset successful" });
+  } catch (error: any) {
+    res
+      .status(400)
+      .json({ success: false, message: "Could not reset password" });
   }
 };
