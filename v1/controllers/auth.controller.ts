@@ -6,6 +6,11 @@ import { daysFromNow } from "../utils/dateTime.utils";
 import { generateAuthTokenAndCookie } from "../utils/generateAuthTokenAndCookie";
 import { sendVerificationEmail } from "../mailtrap/emails";
 
+/* Account Registration Endpoint
+   INFO: This endpoint creates a user account.
+   ACCEPTS: A JSON object containing the user email, name, password, accountType - {"email": "test@flaury.com", "name": "John Doe", "password": "test123", "accountType": "customer"}
+   USAGE: /api/v1/auth/signup
+*/
 export const register = async (req: Request, res: Response) => {
   const { email, name, password, accountType } = req.body;
 
@@ -74,29 +79,30 @@ export const verifyEmail = async (req: Request, res: Response) => {
   }
 };
 
+/* Account Login Endpoint
+   INFO: This endpoint logs in a user.
+   ACCEPTS: A JSON object containing the user email and password - {email: "test@flaury.com", password: "test123"}
+   USAGE: /api/v1/auth/login
+*/
 export const signin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
-    console.log("Finding user...");
     const user = await User.findOne({ email });
     if (!user) {
-      throw new Error("Could not find a user with the given email");
+      res.status(200).json({ success: false, message: "An account with that e-mail does not exist." });
     }
 
-    console.log("Comparing password...");
     const passwordMatched = await bcrypt.compare(password, user.password);
     if (!passwordMatched) {
-      throw new Error("Incorrect Password");
+      res.status(200).json({ success: false, message: "Invalid credentials." });
     }
 
     generateAuthTokenAndCookie(user._id, res);
     user.lastLogin = new Date();
     await user.save();
 
-    res
-      .status(200)
-      .json({ success: true, message: "Authentication successful!" });
+    res.status(200).json({ success: true, message: "Authentication successful!" });
   } catch (error: any) {
     console.error("Error during login:", error.message);
     res.status(400).json({ success: false, message: error.message });
