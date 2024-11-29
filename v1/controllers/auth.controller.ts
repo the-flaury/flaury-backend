@@ -1,8 +1,7 @@
 import type { Request, Response } from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import User from "../models/user.models";
 import generateVerificationToken from "../utils/generateVerificationToken";
-import { connectMongoDB } from "../utils/mongodb";
 import { daysFromNow } from "../utils/dateTime.utils";
 import { generateAuthTokenAndCookie } from "../utils/generateAuthTokenAndCookie";
 import { sendVerificationEmail } from "../mailtrap/emails";
@@ -10,46 +9,45 @@ import { sendVerificationEmail } from "../mailtrap/emails";
 export const register = async (req: Request, res: Response) => {
   const { email, name, password, accountType } = req.body;
 
-  console.log({ req: req.body });
-
-  connectMongoDB();
   try {
-    if (!email || !name || !password)
+    if (!email || !name || !password) {
       throw new Error("Please fill out required fields");
+    }
 
     const userExists = await User.findOne({ email });
-    if (userExists) throw new Error("Account already exists");
+    if (userExists) {
+      throw new Error("Account already exists");
+    }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const verificationToken = generateVerificationToken() as number;
+    const verificationToken = generateVerificationToken();
     const verificationTokenExpiresAt = daysFromNow(1);
-    console.log({ verificationTokenExpiresAt });
 
     const user = new User({
       email,
       name,
       password: hashedPassword,
       verificationToken,
+      verificationTokenExpiresAt,
       accountType,
     });
 
-    user.save();
+    await user.save();
 
     generateAuthTokenAndCookie(user._id, res);
     await sendVerificationEmail(email, verificationToken);
 
-    res.json({
+    res.status(201).json({
       success: true,
       message: "Account created successfully!",
       user: { ...user._doc, password: undefined },
     });
   } catch (error: any) {
-    console.log({ error });
-    res.status(400).json({ success: false, message: error?.message });
+    res.status(400).json({ success: false, message: error.message });
   }
 };
+
 
 export const verifyEmail = async (req: Request, res: Response) => {
   const { code } = req.body;
@@ -78,21 +76,29 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
 export const signin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email });
-    if (!user) throw new Error("Could not finding a user with the given email");
 
+  try {
+    console.log("Finding user...");
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new Error("Could not find a user with the given email");
+    }
+
+    console.log("Comparing password...");
     const passwordMatched = await bcrypt.compare(password, user.password);
-    if (!passwordMatched) throw new Error("Incorrect Password");
+    if (!passwordMatched) {
+      throw new Error("Incorrect Password");
+    }
+
     generateAuthTokenAndCookie(user._id, res);
     user.lastLogin = new Date();
-
-    user.save();
+    await user.save();
 
     res
       .status(200)
       .json({ success: true, message: "Authentication successful!" });
   } catch (error: any) {
+    console.error("Error during login:", error.message);
     res.status(400).json({ success: false, message: error.message });
   }
 };
@@ -117,7 +123,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     user.resetPasswordToken = generateVerificationToken("mix");
     user.resetPasswordExpiresAt = daysFromNow(1);
 
-    user.save();
+    await user.save();
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
   }
@@ -138,7 +144,7 @@ export const resetPassword = async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, salt);
     user.password = hashedPassword;
 
-    user.save();
+    await user.save();
 
     res
       .status(200)
