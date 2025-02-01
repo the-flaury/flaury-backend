@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  flask-app:
+    build:
+      context: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:5.0
+    command: ["mongod", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  mongo-express:
+    image: mongo-express:latest
+    ports:
+      - "8081:8081"  # Access Mongo Express via http://localhost:8081
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo  # Connect to the "mongo" service
+      - ME_CONFIG_MONGODB_PORT=27017    # MongoDB port
+      - ME_CONFIG_BASICAUTH=false   # Disable authentication in Mongo-Express
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=false  # Avoid unnecessary admin authentication
+    depends_on:
+      - mongo
+    networks:
+      - flaury-network
+
+volumes:
+  mongo-data:
+
+networks:
+  flaury-network:

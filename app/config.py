@@ -23,5 +23,5 @@ if PRODUCTION:
     URI = f"mongodb+srv://{MONGO_USER}:{MONGO_PASSWORD}@{MONGO_HOST}/{MONGO_DB}{MONGO_OPTIONS}"
     DB_NAME = MONGO_DB
 else:
-    URI = "mongodb://localhost:27017"
+    URI = "mongodb://mongo:27017"
     DB_NAME = "my_flask_api"

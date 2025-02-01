@@ -38,4 +38,4 @@ def redoc():
     return redirect("/apidocs/?doc_expansion=none")
 
 if __name__ == "__main__":
-    app.run(debug=True)  # Set to False in production
+    app.run(host="0.0.0.0", port=5000, debug=True)  # Set to False in production
